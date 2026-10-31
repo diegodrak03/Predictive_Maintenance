@@ -2,12 +2,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 RAW_DATA = ROOT / "dataset" / "raw_data" / "raw_data.csv"
-PROCESSED_DIR = ROOT / "dataset" / "processed"
+PROCESSED_DIR = ROOT / "dataset" / "processed_data"
+PROCESSED_DATA = PROCESSED_DIR / "processed_data.csv"
 RESULTS_DIR = ROOT / "results"
 
 SEED = 42
 
-COLUMN_RENAMES = columns={
+COLUMN_RENAMES = {
         "UID": "uid",
         "Product ID": "product_id",
         "Type": "type",
