@@ -6,3 +6,20 @@ PROCESSED_DIR = ROOT / "dataset" / "processed"
 RESULTS_DIR = ROOT / "results"
 
 SEED = 42
+
+COLUMN_RENAMES = columns={
+        "UID": "uid",
+        "Product ID": "product_id",
+        "Type": "type",
+        "Air temperature": "air_temp_k",
+        "Process temperature": "process_temp_k",
+        "Rotational speed": "rotational_speed_rpm",
+        "Torque": "torque_nm",
+        "Tool wear": "tool_wear_min",
+        "Machine failure": "machine_failure",
+        "TWF": "tool_wear_failure",
+        "HDF": "heat_dissipation_failure",
+        "PWF": "power_failure",
+        "OSF": "overstrain_failure",
+        "RNF": "random_failure"
+}
