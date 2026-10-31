@@ -1,0 +1,11 @@
+results/
+dataset/
+
+__pycache__/
+.env/
+
+misc/
+
+raw_data.csv
+
+pm.egg-info/

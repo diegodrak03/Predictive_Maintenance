@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pm"
+version = "0.1.0"
+description = "Predictive maintenance on the AI4I 2020 dataset"
+requires-python = ">=3.10"
+
+[tool.setuptools.packages.find]
+where = ["src"]
