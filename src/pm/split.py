@@ -15,6 +15,18 @@ def split_train_test(df):
     return df.iloc[train_idx], df.iloc[test_idx]
 
 
+def temporal_split(df, test_fraction = 0.2):
+    """
+    Splits into train and tests by whole tool cycles.
+    The test set is the last "test fraction" of the cycles
+    """
+    n_cycles = df["tool_cycle"].max() + 1
 
+    n_test_cycles = round(test_fraction * n_cycles)
 
+    first_test_cycle = n_cycles - n_test_cycles
+
+    is_test = df["tool_cycle"] >= first_test_cycle
+
+    return df[~is_test] , df[is_test] 
 
