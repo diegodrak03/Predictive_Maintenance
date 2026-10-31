@@ -41,6 +41,17 @@ def add_tool_cycle(df):
 
     return df
 
+def load_processed():
+    """
+    Load the processed data from the CSV file specified in the config.
+    
+    Returns:
+        pd.DataFrame: The processed data as a pandas DataFrame.
+    """
+    return pd.read_csv(config.PROCESSED_DATA)
+
+
+
 if __name__ == "__main__":
     df = load_raw()
     df = rename_columns(df)

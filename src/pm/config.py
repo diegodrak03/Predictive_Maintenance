@@ -24,3 +24,13 @@ COLUMN_RENAMES = {
         "OSF": "overstrain_failure",
         "RNF": "random_failure"
 }
+
+BASIC_NUMERICAL_COLUMNS = ["air_temp_k", "process_temp_k", "rotational_speed_rpm", "torque_nm", "tool_wear_min"]
+
+PHYSICAL_NUMERICAL_COLUMNS = ["temp_diff_k", "power_w", "overstrain_min_nm"]
+
+CATEGORICAL_COLUMNS = ["type"]
+
+LABEL = "machine_failure"
+
+GROUPS = "tool_cycle"
