@@ -20,7 +20,6 @@ def main():
     rows, columns = df.shape
     print(f"{rows} rows X {columns} columns")
 
-    print(df["power_w"].describe())
 
 
 if __name__ == "__main__":
