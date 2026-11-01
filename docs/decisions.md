@@ -4,8 +4,6 @@
 All dependencies install with pip (pandas, scikit-learn, XGBoost), so conda adds nothing
 essential. venv ships with Python and requirements.txt is the standard in software projects.
 The environment lives in the project root and is excluded from Git.
-[TO DO: the environment is called .env; rename it to .venv so it is not confused with the
-python-dotenv secrets file]
 
 ## 2. Project structure
 - dataset/raw_data: data exactly as downloaded from the API. Never modified.
@@ -287,8 +285,21 @@ The criterion is therefore not met, by one false alarm. This was the risk noted 
 section 20: 0.093 lies where normal processes concentrate, so precision is unstable. The
 threshold is not moved after seeing the test set. PR-AUC, which does not depend on the
 threshold, is within the cross-validation range.
-- Every miss is again a TWF (5) or the unexplained failure (1).
 - The test set has no RNF failures, so test recall may be slightly optimistic.
+
+Missed failures on the test set (threshold 0.093):
+
+| UID | Cycle | Tool wear [min] | Mode | Probability |
+| --- | --- | --- | --- | --- |
+| 2672 | 31 | 221 | TWF | 0.020 |
+| 3696 | 43 | 207 | TWF | 0.027 |
+| 6257 | 73 | 206 | TWF | 0.000 |
+| 6479 | 76 | 145 | none | 0.000 |
+| 9175 | 108 | 200 | TWF | 0.007 |
+| 9759 | 115 | 218 | TWF | 0.057 |
+
+- Every miss is a TWF (5) or the unexplained failure (1). No HDF, PWF or OSF failure is
+  missed, so the cross-validation conclusion (section 21) holds on the test set.
 
 ## 24. Secondary: temporal drift
 Same model and threshold, trained on the first 96 cycles (8,112 processes) and evaluated on
@@ -309,9 +320,26 @@ cycles of the main test set; nothing is decided with this experiment.
 | TWF | 9 | 2 | 0.222 |
 | No mode flagged | 2 | 0 | 0.000 |
 
-- PR-AUC drops by about 0.12. The deterministic modes are still detected at 100 %; the drop
-  comes from the mix of failures: there is no HDF (the temperature difference stays between
-  10 and 11.5 K) and TWF is a larger share (9 of 37).
+Share of each mode among the failures (a failure can have more than one mode, so the
+shares do not add up to 100 %):
+
+| Mode | Main test (65) | Last 24 cycles (37) |
+| --- | --- | --- |
+| HDF | 22 (33.8 %) | 0 (0.0 %) |
+| PWF | 16 (24.6 %) | 10 (27.0 %) |
+| OSF | 23 (35.4 %) | 20 (54.1 %) |
+| TWF | 9 (13.8 %) | 9 (24.3 %) |
+| RNF | 0 | 0 |
+| No mode flagged | 1 (1.5 %) | 2 (5.4 %) |
+
+- PR-AUC drops by about 0.12, and the drop is explained by the mix of failures, not by the
+  model degrading. There is no HDF (the temperature difference stays between 10 and
+  11.5 K), and the hard failures (TWF or no mode) go from 10 of 65 (15 %) to 11 of 37
+  (30 %).
+- The deterministic modes do not degrade: PWF and OSF are detected at 100 %, and PR-AUC
+  computed only on deterministic failures against all normal processes is 0.998 on the
+  main test set and 1.000 on the last 24 cycles. The false alarm rate at 0.093 is also
+  lower (1.4 % of normal processes versus 3.2 %).
 - In a plant, the conditions at the end of a period may differ from those used for
   training, so performance should be monitored and the model retrained.
 

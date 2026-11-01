@@ -20,11 +20,17 @@ Frozen test set (24 tool cycles, 1,951 processes, 65 failures), threshold 0.093:
 | Recall | 0.883 | **0.908** |
 | Detected / missed / false alarms | 242 / 32 / 235 | 59 / 6 / 60 |
 
-The success criterion (recall of at least 75 % with precision of at least 50 %, and
-PR-AUC clearly above logistic regression) is met for recall and PR-AUC but missed for
-precision by one false alarm (60 false alarms for 59 detected failures). The threshold was
-not moved after seeing the test set. See [docs/decisions.md](docs/decisions.md),
-section 23.
+A random model has PR-AUC 0.034.
+
+The success criterion, recall of at least 75 % with precision of at least 50 % and PR-AUC
+clearly above logistic regression (0.494 in cross-validation), is met for recall and PR-AUC
+but missed for precision by one false alarm (60 false alarms for 59 detected
+failures). The threshold was not moved after seeing the test set. See
+[docs/decisions.md](docs/decisions.md), section 23.
+
+With 65 failures in the test set, this difference is well within the uncertainty of the
+estimate. In hindsight, choosing the threshold with a safety margin on validation precision
+(for example 55 %) would make the target robust to new data.
 
 Key findings:
 
@@ -32,14 +38,14 @@ Key findings:
    0.742 to 0.898 in cross-validation (logistic regression only goes from 0.464 to 0.494).
 2. **The deterministic failure modes are fully detected.** HDF, PWF and OSF are detected at
    100 % in both cross-validation and test.
-3. **Every missed failure is unpredictable with these inputs.** All misses are tool wear
-   failures (TWF, which happen at a random time between 200 and 240 min) or failures with
-   no recorded cause.
+3. **Every missed failure is unpredictable with these inputs.** All misses, in
+   cross-validation (32) and test (6), are tool wear failures (TWF, which happen at a
+   random time between 200 and 240 min) or failures with no recorded cause.
 
 ![Precision-recall curve on the test set](docs/figures/pr_curve_test.png)
 
 The model has learned the generator's rules: the predicted risk jumps exactly at the power
-limits of 3500 W and 9000 W, and the most important inputs are the ones used by the
+limits of 3500 W and 9000 W (within 10 W), and the most important inputs are the ones used by the
 failure rules.
 
 ![Partial dependence on power](docs/figures/partial_dependence_power_w.png)
@@ -116,11 +122,16 @@ On Linux or macOS, activate the environment with `source .venv/bin/activate`.
 - **Synthetic data.** The failures follow simple rules, which is why the deterministic
   modes are detected at 100 %. Real failures are noisier.
 - **One sensor value per process.** There is no time series inside a process, and the model
-  assumes torque and process temperature are known when the prediction is made. Without
-  them PR-AUC falls from 0.90 to 0.40 (section 25).
+  assumes torque and process temperature are known when the prediction is made. A model
+  that only uses inputs known before the process loses torque, process temperature and
+  the three physics features that depend on them, and its PR-AUC falls from 0.90 to 0.40
+  in cross-validation (section 25). The drop is not due to torque alone.
 - **The threshold depends on real costs.** 0.093 maximises recall at 50 % precision, an
   assumption in the absence of costs. If a missed failure cost about 10 false alarms, a
   threshold near 0.3 would be better.
 - **Drift over time.** Trained on the first 96 cycles and evaluated on the last 24, PR-AUC
-  drops from 0.917 to 0.793 (section 24). A deployed model would need monitoring and
-  retraining.
+  drops from 0.917 to 0.793 (section 24). The drop comes from the failure mix, not from
+  the model degrading: the last cycles have no HDF, and TWF or unexplained failures are
+  30 % of the failures instead of 15 %. PWF and OSF are still detected at 100 %. In a real
+  plant, conditions could change in ways this synthetic data does not show, so monitoring
+  and retraining would still be needed.
