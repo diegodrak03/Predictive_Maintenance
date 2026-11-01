@@ -2,9 +2,8 @@ results/
 dataset/
 
 __pycache__/
-.env/
+.venv/
 
-misc/
 
 raw_data.csv
 
