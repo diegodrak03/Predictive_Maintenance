@@ -57,3 +57,11 @@ def build_xgboost_pipeline(numeric_columns, scale_pos_weight=None):
         ("preprocessor", preprocessor),
         ("classifier", xgb.XGBClassifier(scale_pos_weight=scale_pos_weight, n_estimators=300, learning_rate=0.1, max_depth=4, random_state=config.SEED, n_jobs=-1)),
     ])
+
+def build_selected_model(numeric_columns=config.SELECTED_NUMERICAL_COLUMNS):
+    """
+    Build the selected model (decisions.md, section 20): random forest with 300 trees,
+    no class weighting, basic + physical numeric columns and Type one-hot encoded.
+    The numeric columns can be changed only for the "before the process" comparison.
+    """
+    return build_random_forest_pipeline(numeric_columns)

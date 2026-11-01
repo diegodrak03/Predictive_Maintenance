@@ -34,3 +34,28 @@ CATEGORICAL_COLUMNS = ["type"]
 LABEL = "machine_failure"
 
 GROUPS = "tool_cycle"
+
+METRICS_DIR = RESULTS_DIR / "metrics"
+FIGURES_DIR = RESULTS_DIR / "figures"
+
+FAILURE_MODE_COLUMNS = ["heat_dissipation_failure", "power_failure", "overstrain_failure", "tool_wear_failure", "random_failure"]
+
+FAILURE_MODE_NAMES = {
+        "heat_dissipation_failure": "HDF",
+        "power_failure": "PWF",
+        "overstrain_failure": "OSF",
+        "tool_wear_failure": "TWF",
+        "random_failure": "RNF"
+}
+
+N_FOLDS = 5
+
+SELECTED_NUMERICAL_COLUMNS = BASIC_NUMERICAL_COLUMNS + PHYSICAL_NUMERICAL_COLUMNS
+
+SELECTED_THRESHOLD = 0.093
+
+THRESHOLDS_TO_REPORT = [0.05, 0.093, 0.1, 0.2, 0.3, 0.4, 0.5]
+
+HDF_TEMP_DIFF_K = 8.6
+
+MIN_PRECISION = 0.5

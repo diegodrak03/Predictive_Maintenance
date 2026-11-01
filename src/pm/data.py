@@ -50,6 +50,21 @@ def load_processed():
     """
     return pd.read_csv(config.PROCESSED_DATA)
 
+def get_xy(df, numeric_columns):
+    """
+    Select the model inputs, the label and the groups for cross-validation.
+    The only inputs are the given numeric columns plus Type.
+
+    Args:
+        df (pd.DataFrame): The processed DataFrame (or a split of it).
+        numeric_columns (list): The numeric columns to use as inputs.
+
+    Returns:
+        tuple: X (pd.DataFrame), y (pd.Series), groups (pd.Series).
+    """
+    X = df[numeric_columns + config.CATEGORICAL_COLUMNS]
+    return X, df[config.LABEL], df[config.GROUPS]
+
 
 
 if __name__ == "__main__":

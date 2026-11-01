@@ -30,3 +30,11 @@ def temporal_split(df, test_fraction = 0.2):
 
     return df[~is_test] , df[is_test] 
 
+
+
+def cv_splitter():
+    """
+    Cross-validation splitter used on the training set: 5 folds by whole tool cycles,
+    keeping the failure rate similar. Always pass it as cv, with groups=tool_cycle.
+    """
+    return StratifiedGroupKFold(n_splits=config.N_FOLDS, shuffle=True, random_state=config.SEED)
