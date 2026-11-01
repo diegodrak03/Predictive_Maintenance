@@ -5,7 +5,7 @@ from sklearn.inspection import permutation_importance
 from sklearn.metrics import average_precision_score, precision_recall_curve
 from sklearn.model_selection import cross_val_predict, cross_val_score
 
-from pm import config, split
+from pm import config, data, split
 
 
 def cv_pr_auc(pipeline, X, y, groups):
@@ -185,3 +185,23 @@ def cv_partial_dependence(folds, feature, grid):
         table[f"fold_{i}"] = values
     table["mean"] = table.filter(like="fold_").mean(axis=1)
     return table
+
+
+def evaluate_holdout(pipeline, train, test, numeric_columns, threshold=config.SELECTED_THRESHOLD):
+    """
+    Train the pipeline on train, predict test once and apply the threshold.
+
+    Returns:
+        tuple: (proba on test, dict with PR-AUC and the threshold metrics,
+        recall_by_mode DataFrame).
+    """
+    X_train, y_train, _ = data.get_xy(train, numeric_columns)
+    X_test, y_test, _ = data.get_xy(test, numeric_columns)
+
+    model = clone(pipeline).fit(X_train, y_train)
+    proba = model.predict_proba(X_test)[:, 1]
+
+    summary = {"pr_auc": pr_auc(y_test, proba)}
+    summary.update(threshold_metrics(y_test, proba, threshold))
+
+    return proba, summary, recall_by_mode(test, proba >= threshold)

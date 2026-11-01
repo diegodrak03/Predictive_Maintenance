@@ -59,3 +59,14 @@ THRESHOLDS_TO_REPORT = [0.05, 0.093, 0.1, 0.2, 0.3, 0.4, 0.5]
 HDF_TEMP_DIFF_K = 8.6
 
 MIN_PRECISION = 0.5
+
+# Inputs known before machining starts: no process temperature or torque, so no physics features
+BEFORE_PROCESS_NUMERICAL_COLUMNS = ["air_temp_k", "rotational_speed_rpm", "tool_wear_min"]
+
+# Cross-validation figures of the selected model and the baseline (decisions.md, sections 18 to 20)
+CV_PR_AUC = (0.898, 0.042)
+CV_PRECISION = 0.507
+CV_RECALL = 0.883
+CV_LOGISTIC_PR_AUC = (0.494, 0.045)
+
+MIN_RECALL = 0.75
