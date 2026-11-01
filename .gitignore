@@ -1,10 +1,7 @@
-results/
+.venv/
 dataset/
+results/
 
 __pycache__/
-.venv/
-
-
-raw_data.csv
-
-pm.egg-info/
+*.egg-info/
+.ipynb_checkpoints/
