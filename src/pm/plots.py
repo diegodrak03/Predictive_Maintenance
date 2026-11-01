@@ -80,3 +80,39 @@ def pr_curve(y, proba, threshold=config.SELECTED_THRESHOLD, min_precision=config
     style_axes(ax)
     return fig
 
+
+
+def bar_chart(labels, values, errors=None, xlabel="", title=""):
+    """
+    Horizontal bar chart, largest value on top, with optional error bars.
+    """
+    order = np.argsort(values)
+    fig, ax = plt.subplots(figsize=(7, 0.45 * len(labels) + 1))
+    ax.barh(np.asarray(labels)[order], np.asarray(values)[order], height=0.6, color=BLUE,
+            xerr=None if errors is None else np.asarray(errors)[order],
+            error_kw={"ecolor": INK, "elinewidth": 1, "capsize": 3})
+    ax.axvline(0, color=INK, linewidth=0.8)
+    ax.set_xlabel(xlabel)
+    ax.set_title(title)
+    style_axes(ax)
+    ax.grid(False, axis="y")
+    return fig
+
+
+def partial_dependence_plot(table, feature, xlabel, title, references=()):
+    """
+    Partial dependence curve: one thin line per fold and the mean in bold.
+    references is a list of (value, label) vertical lines.
+    """
+    fig, ax = plt.subplots(figsize=(7, 4))
+    for column in table.filter(like="fold_").columns:
+        ax.plot(table[feature], table[column], color=BLUE, alpha=0.3, linewidth=1)
+    ax.plot(table[feature], table["mean"], color=BLUE, linewidth=2.5, label="Mean of 5 folds")
+    for value, label in references:
+        ax.axvline(value, color=ORANGE, linestyle="--", linewidth=1.2, label=label)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel("Mean predicted failure probability [-]")
+    ax.set_title(title)
+    ax.legend(frameon=False, loc="best")
+    style_axes(ax)
+    return fig
