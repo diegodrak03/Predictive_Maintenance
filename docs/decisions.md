@@ -212,3 +212,136 @@ Only processes that are machine failures are counted in each row.
 - Conclusion: every error lies in the unpredictable part of the problem. The model is at the
   ceiling these data allow, so tuning or more complex models cannot improve recall; that
   would need new information (vibration, parts machined per tool).
+
+
+## 22. Interpretation (cross-validation, training set only)
+Computed with scripts/interpret.py on the selected model, refitted on each training fold.
+
+Permutation importance: drop in PR-AUC on the validation fold when one input column is
+shuffled (10 repeats), averaged over the 5 folds. Type is shuffled as one column.
+
+| Feature | Drop in PR-AUC |
+| --- | --- |
+| rotational_speed_rpm | 0.218 ± 0.065 |
+| temp_diff_k | 0.207 ± 0.068 |
+| overstrain_min_nm | 0.200 ± 0.038 |
+| power_w | 0.182 ± 0.049 |
+| type | 0.057 ± 0.031 |
+| tool_wear_min | 0.032 ± 0.006 |
+| torque_nm, air_temp_k, process_temp_k | < 0.01 |
+
+- The four top features are exactly the inputs of the deterministic rules: temperature
+  difference and speed (HDF), power (PWF), overstrain (OSF). Speed ranks first because it
+  takes part in two modes (HDF and power).
+- Type matters only through OSF, whose overstrain limit depends on the variant.
+- Raw torque and temperatures barely matter: their information is already inside the
+  physics features, so shuffling one of them alone costs almost nothing.
+- Tool wear has low importance because TWF happens at a random time between 200 and
+  240 min, so it only signals a risk zone.
+
+Partial dependence (mean predicted probability when one feature is set to a value in every
+validation row):
+
+| Feature | Behaviour |
+| --- | --- |
+| tool_wear_min | flat around 0.04 up to 200 min, then rises to about 0.24 |
+| power_w | about 0.58 below 3500 W, about 0.04 in between, about 0.77 above 9000 W |
+| temp_diff_k | about 0.12 below 8.6 K, drops to about 0.03 above it |
+
+- The steps fall exactly on the generator's thresholds: the model has learned the rules.
+- Caveat: changing power alone keeps torque and speed fixed, so some evaluated combinations
+  cannot happen physically.
+
+Missed failures: 32 (out-of-fold, threshold 0.093), exactly 24 TWF and 8 with no mode
+flagged, as in section 21. The missed TWF have tool wear between 198 and 227 min; the 8
+unexplained ones have any tool wear (20 to 210 min) and a probability close to 0. The list
+is saved in results/metrics/missed_failures.csv.
+
+## 23. Final evaluation on the frozen test set
+The selected model (section 20) was trained on the whole training set and the test set was
+predicted once, with threshold 0.093. Nothing was changed afterwards.
+
+| | Cross-validation | Test |
+| --- | --- | --- |
+| PR-AUC | 0.898 ± 0.042 | **0.917** |
+| Precision | 0.507 | **0.496** |
+| Recall | 0.883 | **0.908** |
+| Detected / missed / false alarms | 242 / 32 / 235 | 59 / 6 / 60 |
+
+| Mode | Failures | Detected | Recall |
+| --- | --- | --- | --- |
+| HDF | 22 | 22 | 1.000 |
+| PWF | 16 | 16 | 1.000 |
+| OSF | 23 | 23 | 1.000 |
+| TWF | 9 | 4 | 0.444 |
+| RNF | 0 | - | - |
+| No mode flagged | 1 | 0 | 0.000 |
+
+Success criterion (section 17):
+- Recall of at least 75 %: met (0.908).
+- PR-AUC clearly above logistic regression: met (0.917 versus 0.494 ± 0.045 in
+  cross-validation, more than 3 standard deviations above).
+- Precision of at least 50 %: **not met** (0.496: 60 false alarms for 59 detected failures).
+
+The criterion is therefore not met, by one false alarm. This was the risk noted in
+section 20: 0.093 lies where normal processes concentrate, so precision is unstable. The
+threshold is not moved after seeing the test set. PR-AUC, which does not depend on the
+threshold, is within the cross-validation range.
+- Every miss is again a TWF (5) or the unexplained failure (1).
+- The test set has no RNF failures, so test recall may be slightly optimistic.
+
+## 24. Secondary: temporal drift
+Same model and threshold, trained on the first 96 cycles (8,112 processes) and evaluated on
+the last 24 cycles (1,888 processes, 37 failures, no HDF). The training part includes
+cycles of the main test set; nothing is decided with this experiment.
+
+| | Main test | Last 24 cycles |
+| --- | --- | --- |
+| PR-AUC | 0.917 | 0.793 |
+| Precision | 0.496 | 0.528 |
+| Recall | 0.908 | 0.757 |
+| Detected / missed / false alarms | 59 / 6 / 60 | 28 / 9 / 25 |
+
+| Mode | Failures | Detected | Recall |
+| --- | --- | --- | --- |
+| PWF | 10 | 10 | 1.000 |
+| OSF | 20 | 20 | 1.000 |
+| TWF | 9 | 2 | 0.222 |
+| No mode flagged | 2 | 0 | 0.000 |
+
+- PR-AUC drops by about 0.12. The deterministic modes are still detected at 100 %; the drop
+  comes from the mix of failures: there is no HDF (the temperature difference stays between
+  10 and 11.5 K) and TWF is a larger share (9 of 37).
+- In a plant, the conditions at the end of a period may differ from those used for
+  training, so performance should be monitored and the model retrained.
+
+## 25. Secondary: "before the process" model
+Same model, main split, using only inputs known before machining starts: air_temp_k,
+rotational_speed_rpm, tool_wear_min and Type. temp_diff_k, power_w and overstrain_min_nm
+cannot be used because they depend on process temperature or torque. The threshold 0.093 is
+kept; nothing was tuned for this model.
+
+Cross-validation PR-AUC: **0.402 ± 0.039** (main model 0.898 ± 0.042), computed before
+looking at its test result.
+
+| | Main model | Before the process |
+| --- | --- | --- |
+| Test PR-AUC | 0.917 | 0.425 |
+| Precision | 0.496 | 0.273 |
+| Recall | 0.908 | 0.769 |
+| Detected / missed / false alarms | 59 / 6 / 60 | 50 / 15 / 133 |
+
+| Mode | Main model | Before the process |
+| --- | --- | --- |
+| HDF (22) | 1.000 | 1.000 |
+| PWF (16) | 1.000 | 0.500 |
+| OSF (23) | 1.000 | 0.913 |
+| TWF (9) | 0.444 | 0.444 |
+
+- Measuring torque and process temperature is worth about 0.49 of PR-AUC: without them the
+  model is below logistic regression with all inputs.
+- HDF is still detected at 100 % without process temperature. This is not physics: all 115
+  HDF failures happen between UID 3237 and 4852, and in this dataset air temperature and
+  temperature difference are strongly correlated (-0.70), a coincidence of two random walks.
+  The model uses air temperature as a proxy for that period, which would not transfer to a
+  real plant (see section 24).
